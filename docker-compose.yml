@@ -1,0 +1,149 @@
+services:
+  traefik:
+    image: traefik:v3.0
+    container_name: "secretum-traefik"
+    ports:
+      - "80:80"
+    networks:
+      - secretum_proxy
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - ./traefik:/etc/traefik:ro
+    env_file:
+      - .env
+    labels:
+      - 'traefik.docker.network=secretum_proxy'
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+    healthcheck:
+      test: 'wget --quiet --spider http://localhost:8082/ping || exit 1'
+      interval: '30s'
+      timeout: '3s'
+      start_period: '5s'
+      retries: 3
+
+  redis:
+    image: redis:7.0-alpine
+    container_name: "secretum-redis"
+    expose:
+      - 6379
+    command: [ "redis-server", "--appendonly", "yes" ]
+    networks:
+      - secretum_proxy
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "redis-cli ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+
+  redis-insight:
+    image: redis/redisinsight:latest
+    container_name: "secretum-redis-insight"
+    networks:
+      - secretum_proxy
+    volumes:
+      - redis_insight_data:/data
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=secretum_proxy'
+      - "traefik.http.routers.redis-insight.entrypoints=http"
+      - "traefik.http.routers.redis-insight.rule=Host(`redis.${SERVER_NAME}`)"
+      - 'traefik.http.routers.redis-insight.middlewares=no-auth-secured@file'
+      - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: "secretum-prometheus"
+    networks:
+      - secretum_proxy
+    volumes:
+      - ./prometheus:/etc/prometheus
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--storage.tsdb.retention.time=365d'
+    expose:
+      - 9090
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=secretum_proxy'
+      - "traefik.http.routers.prometheus.entrypoints=http"
+      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${SERVER_NAME}`)"
+      - 'traefik.http.routers.prometheus.middlewares=no-auth-secured@file'
+      - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+
+  node-exporter:
+    image: prom/node-exporter:latest
+    container_name: "secretum-node-exporter"
+    expose:
+      - 9100
+    networks:
+      - 'secretum_proxy'
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: "secretum-cadvisor"
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+      - /dev:/dev:ro
+    expose:
+      - 8080
+    networks:
+      - 'secretum_proxy'
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+    privileged: true
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: "secretum-grafana"
+    networks:
+      - secretum_proxy
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+      - GF_USERS_ALLOW_SIGN_UP="false"
+      - PROMETHEUS_URL=http://prometheus:9090
+    labels:
+      - "traefik.enable=true"
+      - 'traefik.docker.network=secretum_proxy'
+      - "traefik.http.routers.grafana.entrypoints=http"
+      - "traefik.http.routers.grafana.rule=Host(`${SERVER_NAME}`)"
+      - 'traefik.http.routers.grafana.middlewares=no-auth-secured@file'
+      - "traefik.http.services.grafana.loadbalancer.server.port=3000"
+    restart: 'unless-stopped'
+    security_opt:
+      - 'no-new-privileges:true'
+
+volumes:
+  redis_data:
+  redis_insight_data:
+  portainer_data:
+  prometheus_data:
+  grafana_data:
+
+networks:
+  secretum_proxy:
+    external: true

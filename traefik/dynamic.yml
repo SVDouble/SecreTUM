@@ -1,0 +1,65 @@
+http:
+  routers:
+    traefik:
+      rule: 'Host(`traefik.{{env "SERVER_NAME"}}`)'
+      service: "api@internal"
+      entryPoints: http
+      middlewares: no-auth-secured@file
+
+  middlewares:
+    ## Primitive Middlewares
+    user-auth:
+      basicAuth:
+        usersFile: '/.htpasswd'
+
+    gzip:
+      compress: { }
+
+    rate-limit:
+      rateLimit:
+        average: 1000
+        burst: 250
+
+    default-secure-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: 'deny'
+          Strict-Transport-Security: 'max-age=31536000 ; includeSubDomains'
+          X-Content-Type-Options: 'nosniff'
+    #          sslRedirect: true
+
+    portal-service-secure-headers:
+      headers:
+        customResponseHeaders:
+          X-Frame-Options: 'SAMEORIGIN'
+          Referrer-Policy: 'strict-origin-when-cross-origin'
+
+    ## Chain Middlewares
+    basic-auth-secured:
+      chain:
+        middlewares:
+          - 'user-auth'
+          - 'default-secure-headers'
+          - 'rate-limit'
+          - 'gzip'
+
+    no-auth-secured:
+      chain:
+        middlewares:
+          - 'default-secure-headers'
+          - 'rate-limit'
+          - 'gzip'
+
+tls:
+  options:
+    mintls12:
+      minVersion: 'VersionTLS12'
+      cipherSuites:
+        - 'TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256'
+        - 'TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256'
+        - 'TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384'
+        - 'TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384'
+      curvePreferences:
+        - 'CurveP521'
+        - 'CurveP384'
+      sniStrict: true
