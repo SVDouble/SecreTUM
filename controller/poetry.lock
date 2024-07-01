@@ -79,6 +79,24 @@ files = [
 ]
 
 [[package]]
+name = "colorzero"
+version = "2.0"
+description = "Yet another Python color library"
+optional = false
+python-versions = "*"
+files = [
+    {file = "colorzero-2.0-py2.py3-none-any.whl", hash = "sha256:0e60d743a6b8071498a56465f7719c96a5e92928f858bab1be2a0d606c9aa0f8"},
+    {file = "colorzero-2.0.tar.gz", hash = "sha256:e7d5a5c26cd0dc37b164ebefc609f388de24f8593b659191e12d85f8f9d5eb58"},
+]
+
+[package.dependencies]
+setuptools = "*"
+
+[package.extras]
+doc = ["pkginfo", "sphinx", "sphinx-rtd-theme"]
+test = ["pytest", "pytest-cov"]
+
+[[package]]
 name = "distlib"
 version = "0.3.8"
 description = "Distribution utilities"
@@ -185,30 +203,22 @@ testing = ["covdefaults (>=2.3)", "coverage (>=7.3.2)", "diff-cover (>=8.0.1)", 
 typing = ["typing-extensions (>=4.8)"]
 
 [[package]]
-name = "gpiod"
-version = "2.2.0"
-description = "Python bindings for libgpiod"
+name = "gpiozero"
+version = "2.0.1"
+description = "A simple interface to GPIO devices with Raspberry Pi"
 optional = false
-python-versions = ">=3.9.0"
+python-versions = ">=3.9"
 files = [
-    {file = "gpiod-2.2.0-cp310-cp310-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:aa7277e1da810dc6d4fe440eca6142e960a9f810c094147ef47a2cfb912c00bb"},
-    {file = "gpiod-2.2.0-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:0fbfe4c2b28b47eaea759935ee462aceff0d17f0aacfdf984ea948d72f751ef7"},
-    {file = "gpiod-2.2.0-cp310-cp310-musllinux_1_2_aarch64.whl", hash = "sha256:ab52cbee07e9701eb8557e9a7332daaed25bc119338babaeabf2b29ee7c4187b"},
-    {file = "gpiod-2.2.0-cp310-cp310-musllinux_1_2_x86_64.whl", hash = "sha256:6f94b436274b1f7c9e7852ef3e1747a11b0a88dba108541d83b0e588f90813eb"},
-    {file = "gpiod-2.2.0-cp311-cp311-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:5f0dc01917f71bc3a14ad30324a2f67cf939d0f97d298dc8cccda667bf12cc1d"},
-    {file = "gpiod-2.2.0-cp311-cp311-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:abe5e433c592121b2aff77efc776a2addebdb00260b88f47a99494905353cc7c"},
-    {file = "gpiod-2.2.0-cp311-cp311-musllinux_1_2_aarch64.whl", hash = "sha256:6a1386dd70d10b39d293d83746c0b46f000971e7199d5a394dd8b15c357999b1"},
-    {file = "gpiod-2.2.0-cp311-cp311-musllinux_1_2_x86_64.whl", hash = "sha256:a435b39a3f82e9704ddded1bfd187619b6a7a6f107bdc3a401b1a7a17663de07"},
-    {file = "gpiod-2.2.0-cp312-cp312-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:8eea40443b10b1fb58355df73de944de60d94b21b4a3d180fd72cc5c8e7886bc"},
-    {file = "gpiod-2.2.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:6911e5b82048a7f12b31e402ccb6d4dcf2616ec80b8448681aef3dad568e134d"},
-    {file = "gpiod-2.2.0-cp312-cp312-musllinux_1_2_aarch64.whl", hash = "sha256:3be6c8ea840c167de5bda498ff09146d6a6f2999e17e35fe2caf586ba73e739b"},
-    {file = "gpiod-2.2.0-cp312-cp312-musllinux_1_2_x86_64.whl", hash = "sha256:7d20559a46375744b20854964bad2c5ccf1642df3de89861800b0003200dec60"},
-    {file = "gpiod-2.2.0-cp39-cp39-manylinux_2_17_aarch64.manylinux2014_aarch64.whl", hash = "sha256:b4c5f831c4fd36845708d92b564523b8ef01067ae142f5ab36fa08ef9371565a"},
-    {file = "gpiod-2.2.0-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:e09ca4db197123b0578850e050450af2cadd7962da9d341f44418b659ed4bded"},
-    {file = "gpiod-2.2.0-cp39-cp39-musllinux_1_2_aarch64.whl", hash = "sha256:0d01b0cf7986c6137f205a2c37f122513ff162b8b62b269ce2ecd1a54c3daad0"},
-    {file = "gpiod-2.2.0-cp39-cp39-musllinux_1_2_x86_64.whl", hash = "sha256:062df036b024e0aaeaf2a9d0e17c51cdfb7d2dd9880aee9c8aebad55e9176a82"},
-    {file = "gpiod-2.2.0.tar.gz", hash = "sha256:4447f05ab42a9ea596e548a9a65389aa84bf61c95dc7a78074bb9c5f8f6a6b35"},
+    {file = "gpiozero-2.0.1-py3-none-any.whl", hash = "sha256:8f621de357171d574c0b7ea0e358cb66e560818a47b0eeedf41ce1cdbd20c70b"},
+    {file = "gpiozero-2.0.1.tar.gz", hash = "sha256:d4ea1952689ec7e331f9d4ebc9adb15f1d01c2c9dcfabb72e752c9869ab7e97e"},
 ]
+
+[package.dependencies]
+colorzero = "*"
+
+[package.extras]
+doc = ["sphinx (>=4.0)", "sphinx-rtd-theme (>=1.0)"]
+test = ["pytest", "pytest-cov"]
 
 [[package]]
 name = "gunicorn"
@@ -873,6 +883,21 @@ files = [
 ]
 
 [[package]]
+name = "setuptools"
+version = "70.1.1"
+description = "Easily download, build, install, upgrade, and uninstall Python packages"
+optional = false
+python-versions = ">=3.8"
+files = [
+    {file = "setuptools-70.1.1-py3-none-any.whl", hash = "sha256:a58a8fde0541dab0419750bcc521fbdf8585f6e5cb41909df3a472ef7b81ca95"},
+    {file = "setuptools-70.1.1.tar.gz", hash = "sha256:937a48c7cdb7a21eb53cd7f9b59e525503aa8abaf3584c730dc5f7a5bec3a650"},
+]
+
+[package.extras]
+docs = ["furo", "jaraco.packaging (>=9.3)", "jaraco.tidelift (>=1.4)", "pygments-github-lexers (==0.0.5)", "pyproject-hooks (!=1.1)", "rst.linker (>=1.9)", "sphinx (>=3.5)", "sphinx-favicon", "sphinx-inline-tabs", "sphinx-lint", "sphinx-notfound-page (>=1,<2)", "sphinx-reredirects", "sphinxcontrib-towncrier"]
+testing = ["build[virtualenv] (>=1.0.3)", "filelock (>=3.4.0)", "importlib-metadata", "ini2toml[lite] (>=0.14)", "jaraco.develop (>=7.21)", "jaraco.envs (>=2.2)", "jaraco.path (>=3.2.0)", "jaraco.test", "mypy (==1.10.0)", "packaging (>=23.2)", "pip (>=19.1)", "pyproject-hooks (!=1.1)", "pytest (>=6,!=8.1.1)", "pytest-checkdocs (>=2.4)", "pytest-cov", "pytest-enabler (>=2.2)", "pytest-home (>=0.5)", "pytest-mypy", "pytest-perf", "pytest-ruff (>=0.3.2)", "pytest-subprocess", "pytest-timeout", "pytest-xdist (>=3)", "tomli", "tomli-w (>=1.0.0)", "virtualenv (>=13.0.0)", "wheel"]
+
+[[package]]
 name = "shellingham"
 version = "1.5.4"
 description = "Tool to Detect Surrounding Shell"
@@ -1286,4 +1311,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.12"
-content-hash = "cf60466ca37e3386049547fa08acde825c973bf7709094fff610ef709d3e34f6"
+content-hash = "ab49c649bf8b78a0dad24852211fe6fef9445f99d2121f0269da1e0ff29720f3"

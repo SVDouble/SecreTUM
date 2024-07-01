@@ -33,7 +33,7 @@ async def stop_pump():
 
 @app.get("/read_sensor")
 async def read_sensor():
-    sensor_value = await repository.read_sensor()
+    sensor_value = await repository.read_measurement()
     return {"value": sensor_value}
 
 

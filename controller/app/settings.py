@@ -23,4 +23,4 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost"
 
     # GPIO enable flag
-    enable_gpio: bool = True
+    gpio_enabled: bool = True

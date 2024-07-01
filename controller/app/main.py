@@ -1,8 +1,8 @@
 import asyncio
 
+from app.api import app
 from app.controller import Controller
-from app.fastapi_backend import app
-from app.gpiod_backend import GPIODBackend
+from app.gpio import GPIOBackend
 from app.repository import Repository
 from app.settings import Settings
 
@@ -11,16 +11,15 @@ async def main():
     settings = Settings()
     repository = Repository(settings)
     controller = Controller(repository)
-    gpio_backend = GPIODBackend(repository)
 
     # Initialize state
-    await repository.set_state("state", Controller.State.INITIAL_WASH)
-    await repository.set_state("pump_activated", "0")
-    await repository.set_state("sensor_value", "42")  # Example initial sensor value
+    await repository.set_state(Controller.State.INITIAL_WASH)
 
     # Start the statechart and GPIO backend
-    controller_main_loop_task = asyncio.create_task(controller.main_loop())
-    gpio_main_loop_task = asyncio.create_task(gpio_backend.monitor_gpio())
+    loops = [asyncio.create_task(controller.main_loop())]
+    if settings.gpio_enabled:
+        gpio_backend = GPIOBackend(repository)
+        loops.append(asyncio.create_task(gpio_backend.monitor()))
 
     # Start FastAPI
     import uvicorn
@@ -30,6 +29,9 @@ async def main():
     )
     server = uvicorn.Server(config)
     await server.serve()
+
+    for loop in loops:
+        loop.cancel()
 
 
 if __name__ == "__main__":

@@ -1,99 +1,67 @@
-from asyncio import Lock
+from typing import Any
 
 import redis.asyncio as redis
 
+from app.models import VariableUpdate, Source
 from app.settings import Settings
 from app.utils import async_lock
 
 
 class Repository:
     def __init__(self, settings: Settings):
-        self.redis = redis.from_url(settings.redis_url, decode_responses=True)
         self.settings = settings
-        self.gpio_enabled = settings.enable_gpio
-        self.lock = Lock()
-        self.gpio_off = None
-        self.gpio_on = None
-        if self.gpio_enabled:
-            import gpiod
+        self.redis = redis.from_url(self.settings.redis_url, decode_responses=True)
 
-            self.gpio_off = gpiod.line.Value(0)
-            self.gpio_on = gpiod.line.Value(1)
-            direction = gpiod.line.Direction
-            self.chip = gpiod.Chip("/dev/gpiochip0")
-            self.buffer_pump_request = self.chip.request_lines(
-                config={
-                    (self.settings.buffer_pump_pin,): gpiod.LineSettings(
-                        direction=direction.OUTPUT
-                    )
-                },
-                consumer="buffer_pump",
-            )
-            self.target_pump_request = self.chip.request_lines(
-                config={
-                    (self.settings.target_pump_pin,): gpiod.LineSettings(
-                        direction=direction.OUTPUT
-                    )
-                },
-                consumer="target_pump",
-            )
-            self.optical_sensor_request = self.chip.request_lines(
-                config={
-                    (self.settings.optical_sensor_pin,): gpiod.LineSettings(
-                        direction=direction.INPUT
-                    )
-                },
-                consumer="optical_sensor",
-            )
+    async def get(self, key: str) -> Any:
+        return await self.redis.get(key)
 
-    @async_lock
-    async def set_state(self, key, value):
+    async def set(self, key: str, value: Any):
         await self.redis.set(key, value)
 
-    @async_lock
-    async def get_state(self, key):
-        return await self.redis.get(key)
+    async def get_state(self) -> str:
+        return await self.get("controller:state")
+
+    async def set_state(self, state: str):
+        await self.set("controller:state", state)
+
+    async def get_gpio(self, pin: int) -> int | bool | None:
+        return await self.get(f"gpio:{pin}")
+
+    async def set_gpio(self, pin: int, value: int | bool, source: Source):
+        await self.set(f"gpio:{pin}", value)
+        update = VariableUpdate(name=str(pin), value=value, source=source)
+        await self.redis.publish("gpio", update.model_dump_json())
 
     @async_lock
     async def start_wash(self):
-        if self.gpio_enabled:
-            self.buffer_pump_request.set_values(
-                {self.settings.buffer_pump_pin: self.gpio_on}
-            )
-        await self.set_state("washing", True)
+        await self.set_gpio(
+            self.settings.buffer_pump_pin, True, source=Source.CONTROLLER
+        )
+        await self.set("washing", True)
 
     @async_lock
     async def stop_wash(self):
-        if self.gpio_enabled:
-            self.buffer_pump_request.set_values(
-                {self.settings.buffer_pump_pin: self.gpio_off}
-            )
-        await self.set_state("washing", False)
+        await self.set_gpio(
+            self.settings.buffer_pump_pin, False, source=Source.CONTROLLER
+        )
+        await self.set("washing", False)
 
     @async_lock
     async def start_pump(self):
-        if self.gpio_enabled:
-            self.target_pump_request.set_values(
-                {self.settings.target_pump_pin: self.gpio_on}
-            )
-        await self.set_state("pump", True)
+        await self.set_gpio(
+            self.settings.target_pump_pin, True, source=Source.CONTROLLER
+        )
+        await self.set("pump", True)
 
     @async_lock
     async def stop_pump(self):
-        if self.gpio_enabled:
-            self.target_pump_request.set_values(
-                {self.settings.target_pump_pin: self.gpio_off}
-            )
-        await self.set_state("pump", False)
+        await self.set_gpio(
+            self.settings.target_pump_pin, False, source=Source.CONTROLLER
+        )
+        await self.set("pump", False)
 
-    @async_lock
-    async def read_sensor(self):
-        # Placeholder for actual sensor read logic
-        return await self.get_state("sensor_value")
+    async def read_measurement(self):
+        return await self.get_gpio(self.settings.x_sensor_pin)
 
-    @async_lock
-    async def check_optical_sensor(self):
-        if self.gpio_enabled:
-            events = self.optical_sensor_request.read_edge_events()
-            return events is not None
-        return False  # Default value when GPIO is disabled
+    async def check_optical_sensor(self) -> bool:
+        return bool(await self.get_gpio(self.settings.optical_sensor_pin))
