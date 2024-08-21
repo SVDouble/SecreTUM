@@ -1,7 +1,7 @@
 from enum import Enum
 
 class Measurement:
-    def __init__(self, title, timestamp, current_arrays, potential_arrays, time_arrays, freq_arrays, zre_arrays, zim_arrays, aux_input_arrays, peaks, eis_fit):
+    def __init__(self, title, timestamp, current_arrays, potential_arrays, time_arrays, freq_arrays, zre_arrays, zim_arrays, aux_input_arrays, peaks, eis_fit, cs_arrays):
         self.Title = title
         self.timestamp = timestamp
         self.current_arrays = current_arrays
@@ -13,6 +13,7 @@ class Measurement:
         self.aux_input_arrays = aux_input_arrays
         self.peaks = peaks
         self.eis_fit = eis_fit
+        self.cs_arrays = cs_arrays
 
 
 class Curve:
@@ -60,6 +61,7 @@ def convert_to_measurement(m, **kwargs):
     freq_arrays = []
     zre_arrays = []
     zim_arrays = []
+    cs_arrays = []
     aux_input_arrays = []
     peaks = []
     eis_fits = []
@@ -96,6 +98,8 @@ def convert_to_measurement(m, **kwargs):
 
         elif (array_type == ArrayType.AuxInput):
             aux_input_arrays.append((_get_values_from_NETArray(array)))
+        elif (array_type == ArrayType.Cs):
+            cs_arrays.append((_get_values_from_NETArray(array)))
 
 
     if load_peak_data:
@@ -112,7 +116,7 @@ def convert_to_measurement(m, **kwargs):
                     
     return Measurement(m.Title, m.TimeStamp.ToString(),
                        current_arrays, potential_arrays, time_arrays, freq_arrays, zre_arrays, zim_arrays, aux_input_arrays,
-                       peaks, eis_fits)
+                       peaks, eis_fits, cs_arrays)
 
 
 def convert_to_curves(m):

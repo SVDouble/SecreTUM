@@ -45,6 +45,10 @@ def electrochemical_impedance_spectroscopy(**kwargs):
     max_frequency = kwargs.get('max_frequency', 1e5)
     min_frequency = kwargs.get('min_frequency', 1e4)
     eis = ImpedimetricMethod()
+    # ScanType = Enum.Parse(ImpedimetricMethod.ScanType, scan_type)
+    # FreqType = Enum.Parse(ImpedimetricMethod.FrequencyType, freq_type)
+    # eis.ScanType = ImpedimetricMethod.enumScanType.FixedPotential
+    # eis.FreqType = ImpedimetricMethod.enumFrequencyType.Scan
     eis.ScanType = scan_type
     eis.FreqType = freq_type
     eis.EquilibrationTime = equilibration_time
