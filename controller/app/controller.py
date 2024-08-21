@@ -2,8 +2,11 @@ import asyncio
 from enum import StrEnum
 
 from app.repository import Repository
+from app.utils import get_logger
 
 __all__ = ["Controller"]
+
+logger = get_logger(__file__)
 
 
 class Controller:
@@ -40,7 +43,7 @@ class Controller:
         pump_activated = await self.repository.get("pump_activated") == "1"
         if not pump_activated:
             sensor_value = await self.repository.read_measurement()
-            print(f"Measured X: {sensor_value}")
+            logger.debug(f"Measured X: {sensor_value}")
             await self.repository.set_state(self.State.POST_MEASURE_WASH)
 
     async def check_optical_sensor(self):
@@ -55,8 +58,10 @@ class Controller:
             await self.repository.set_state(self.State.POST_MEASURE_WASH)
         elif state == self.State.POST_MEASURE_WASH:
             await self.repository.set_state(self.State.IDLE)
+        logger.debug(f"Transition from state '{state}' to '{await self.repository.get_state()}'")
 
     async def main_loop(self):
+        logger.debug(f"Starting from state '{await self.repository.get_state()}'")
         while True:
             state = await self.repository.get_state()
             if state in [self.State.INITIAL_WASH, self.State.POST_MEASURE_WASH]:

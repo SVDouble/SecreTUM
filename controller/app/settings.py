@@ -11,7 +11,7 @@ class Settings(BaseSettings):
 
     title: str = "SecreTUM"
     version: str = "v0.1.0"
-    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "INFO"
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
 
     # GPIO Pins
     buffer_pump_pin: int = 2
@@ -23,4 +23,4 @@ class Settings(BaseSettings):
     redis_url: str = "redis://localhost"
 
     # GPIO enable flag
-    gpio_enabled: bool = True
+    gpio_enabled: bool = False

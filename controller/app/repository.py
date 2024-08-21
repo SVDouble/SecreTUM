@@ -1,5 +1,3 @@
-from typing import Any
-
 import redis.asyncio as redis
 
 from app.models import VariableUpdate, Source
@@ -12,10 +10,10 @@ class Repository:
         self.settings = settings
         self.redis = redis.from_url(self.settings.redis_url, decode_responses=True)
 
-    async def get(self, key: str) -> Any:
+    async def get(self, key: str) -> float | int | str | None:
         return await self.redis.get(key)
 
-    async def set(self, key: str, value: Any):
+    async def set(self, key: str, value: float | int | str):
         await self.redis.set(key, value)
 
     async def get_state(self) -> str:
@@ -28,6 +26,7 @@ class Repository:
         return await self.get(f"gpio:{pin}")
 
     async def set_gpio(self, pin: int, value: int | bool, source: Source):
+        value = int(value)
         await self.set(f"gpio:{pin}", value)
         update = VariableUpdate(name=str(pin), value=value, source=source)
         await self.redis.publish("gpio", update.model_dump_json())
@@ -37,28 +36,28 @@ class Repository:
         await self.set_gpio(
             self.settings.buffer_pump_pin, True, source=Source.CONTROLLER
         )
-        await self.set("washing", True)
+        await self.set("washing", 1)
 
     @async_lock
     async def stop_wash(self):
         await self.set_gpio(
             self.settings.buffer_pump_pin, False, source=Source.CONTROLLER
         )
-        await self.set("washing", False)
+        await self.set("washing", 0)
 
     @async_lock
     async def start_pump(self):
         await self.set_gpio(
             self.settings.target_pump_pin, True, source=Source.CONTROLLER
         )
-        await self.set("pump", True)
+        await self.set("pump", 1)
 
     @async_lock
     async def stop_pump(self):
         await self.set_gpio(
             self.settings.target_pump_pin, False, source=Source.CONTROLLER
         )
-        await self.set("pump", False)
+        await self.set("pump", 0)
 
     async def read_measurement(self):
         return await self.get_gpio(self.settings.x_sensor_pin)
