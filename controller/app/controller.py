@@ -11,63 +11,53 @@ logger = get_logger(__file__)
 
 class Controller:
     class State(StrEnum):
-        INITIAL_WASH = "initial_wash"
         IDLE = "idle"
         MEASURE = "measure"
-        POST_MEASURE_WASH = "post_measure_wash"
+        RECYCLING = "recycle"
 
-    def __init__(self, repository: Repository, wash_duration=5, pump_duration=1):
-        self.wash_duration = wash_duration
-        self.pump_duration = pump_duration
+    def __init__(self, repository: Repository):
         self.repository = repository
+        self.settings = repository.settings
 
-    async def wash_tube(self):
-        await self.repository.start_wash()
-        await asyncio.sleep(self.wash_duration)
-        await self.repository.stop_wash()
-        await self.transition_state()
+    async def start_recycling(self):
+        logger.info("Starting recycling process.")
 
-    async def activate_pump(self):
-        pump_activated = await self.repository.get("pump_activated") == "1"
-        if not pump_activated:
-            await self.repository.start_pump()
-            await self.repository.set("pump_activated", "1")
-        else:
-            await asyncio.sleep(self.pump_duration)
-            await self.repository.stop_pump()
-            await self.repository.set("pump_activated", "0")
-            await self.transition_state()
+        await self.repository.drain()
+        await self.repository.fill_water()
+        await self.repository.drain()
+        await self.repository.fill_buffer()
+
+        logger.info("Recycling process completed.")
+        await self.transition_state(self.State.IDLE)
 
     async def measure_x(self):
-        await self.activate_pump()
-        pump_activated = await self.repository.get("pump_activated") == "1"
-        if not pump_activated:
-            sensor_value = await self.repository.read_measurement()
-            logger.debug(f"Measured X: {sensor_value}")
-            await self.repository.set_state(self.State.POST_MEASURE_WASH)
+        logger.info("Starting measurement.")
+
+        sensor_value = await self.repository.read_measurement()
+        logger.debug(f"Measured X: {sensor_value}")
+
+        await self.transition_state(self.State.RECYCLING)
 
     async def check_optical_sensor(self):
         if await self.repository.check_optical_sensor():
-            await self.repository.set_state(self.State.MEASURE)
+            logger.info("Optical sensor triggered, transitioning to measurement state.")
+            await self.transition_state(self.State.MEASURE)
 
-    async def transition_state(self):
-        state = await self.repository.get_state()
-        if state == self.State.INITIAL_WASH:
-            await self.repository.set_state(self.State.IDLE)
-        elif state == self.State.MEASURE:
-            await self.repository.set_state(self.State.POST_MEASURE_WASH)
-        elif state == self.State.POST_MEASURE_WASH:
-            await self.repository.set_state(self.State.IDLE)
-        logger.debug(f"Transition from state '{state}' to '{await self.repository.get_state()}'")
+    async def transition_state(self, next_state: State):
+        current_state = await self.repository.get_state()
+        logger.info(f"Transitioning from '{current_state}' to '{next_state}'.")
+        await self.repository.set_state(next_state)
 
     async def main_loop(self):
-        logger.debug(f"Starting from state '{await self.repository.get_state()}'")
+        initial_state = Controller.State(self.settings.default_state)
+        await self.repository.set_state(initial_state)
+        logger.debug(f"Setting state to the initial state '{initial_state}'.")
         while True:
             state = await self.repository.get_state()
-            if state in [self.State.INITIAL_WASH, self.State.POST_MEASURE_WASH]:
-                await self.wash_tube()
-            elif state == self.State.IDLE:
+            if state == self.State.IDLE:
                 await self.check_optical_sensor()
             elif state == self.State.MEASURE:
                 await self.measure_x()
-            await asyncio.sleep(0.1)  # Add a small delay to prevent CPU overuse
+            elif state == self.State.RECYCLING:
+                await self.start_recycling()
+            await asyncio.sleep(0.1)  # Small delay to prevent CPU overuse

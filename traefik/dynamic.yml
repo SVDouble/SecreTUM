@@ -26,13 +26,13 @@ http:
           X-Frame-Options: 'deny'
           Strict-Transport-Security: 'max-age=31536000 ; includeSubDomains'
           X-Content-Type-Options: 'nosniff'
-    #          sslRedirect: true
+          # sslRedirect: true
 
     portal-service-secure-headers:
       headers:
         customResponseHeaders:
           X-Frame-Options: 'SAMEORIGIN'
-          Referrer-Policy: 'strict-origin-when-cross-origin'
+          # Referrer-Policy: 'strict-origin-when-cross-origin'
 
     ## Chain Middlewares
     basic-auth-secured:
