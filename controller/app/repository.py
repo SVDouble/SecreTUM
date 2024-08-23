@@ -1,5 +1,6 @@
 import asyncio
 import random
+from datetime import datetime
 
 import redis.asyncio as redis
 
@@ -22,6 +23,12 @@ class Repository:
 
     async def set(self, key: str, value: float | int | str):
         await self.redis.set(key, value)
+
+    async def delete(self, key: str):
+        await self.redis.delete(key)
+
+    async def reset_all(self):
+        await self.redis.flushdb()
 
     async def get_state(self) -> str:
         return await self.get("controller:state")
@@ -74,6 +81,10 @@ class Repository:
         await asyncio.sleep(self.settings.cooldown)
         logger.info("Chamber filled with buffer.")
 
+    async def set_led(self, mode: int):
+        if await self.get_gpio(self.settings.led_pin) != mode:
+            await self.set_gpio(self.settings.led_pin, mode)
+
     async def read_measurement(self):
         await asyncio.sleep(5)
         value = random.randint(0, 42)
@@ -81,4 +92,22 @@ class Repository:
         return value
 
     async def check_optical_sensor(self) -> bool:
-        return bool(await self.get_gpio(self.settings.optical_sensor_pin))
+        value = await self.get_gpio(self.settings.optical_sensor_pin)
+        await self.set("controller:optical_sensor", value or 0)
+        debounce_key = "controller:optical_sensor_time_started"
+        success = False
+        value = not value
+        if value:
+            now = datetime.now()
+            if time_started_str := await self.get(debounce_key):
+                time_started = datetime.strptime(time_started_str, "%Y-%m-%d %H:%M:%S.%f")
+            else:
+                time_started = now
+                await self.set(debounce_key, now.strftime("%Y-%m-%d %H:%M:%S.%f"))
+            seconds_passed = (now - time_started).total_seconds()
+            if seconds_passed > self.settings.led_debounce:
+                success = True
+            logger.debug(f"Optical sensor has been on for {seconds_passed} seconds, success: {success}")
+        else:
+            await self.delete(debounce_key)
+        return success

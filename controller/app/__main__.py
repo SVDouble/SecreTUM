@@ -14,6 +14,8 @@ async def main():
     repository = Repository(settings)
     controller = Controller(repository)
 
+    await repository.reset_all()
+
     # FastAPI
     config = uvicorn.Config(
         app,
@@ -29,11 +31,12 @@ async def main():
     if settings.gpio_enabled:
         gpio_backend = GPIOBackend(
             repository,
-            input_pins=[settings.optical_sensor_pin],
-            output_pins=[
+            digital_inputs=[settings.optical_sensor_pin],
+            digital_outputs=[
                 *settings.buffer_pump,
                 *settings.water_pump,
                 *settings.drain_pump,
+                settings.led_pin,
             ],
         )
         loops.append(asyncio.create_task(gpio_backend.monitor()))

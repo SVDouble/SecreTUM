@@ -24,7 +24,9 @@ class Controller:
 
         await self.repository.drain()
         for i in range(self.settings.recycle_cycles):
-            logger.info(f"Recycling: cycle {i+1} out of {self.settings.recycle_cycles}.")
+            logger.info(
+                f"Recycling: cycle {i+1} out of {self.settings.recycle_cycles}."
+            )
             await self.repository.fill_water()
             await self.repository.drain()
         await self.repository.fill_buffer()
@@ -56,9 +58,13 @@ class Controller:
         while True:
             state = await self.repository.get_state()
             if state == self.State.IDLE:
+                await self.repository.set_led(1)
                 await self.check_optical_sensor()
             elif state == self.State.MEASURE:
+                await asyncio.sleep(self.settings.measurement_delay)
+                await self.repository.set_led(0)
                 await self.measure_x()
             elif state == self.State.RECYCLING:
+                await self.repository.set_led(1)
                 await self.start_recycling()
             await asyncio.sleep(0.1)  # Small delay to prevent CPU overuse

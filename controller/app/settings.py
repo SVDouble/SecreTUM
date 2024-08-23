@@ -18,6 +18,7 @@ class Settings(BaseSettings):
     water_pump: tuple[int, int] = (22, 23)
     drain_pump: tuple[int, int] = (27, 17)
     optical_sensor_pin: int = 4
+    led_pin: int = 14
 
     # Redis URL
     redis_url: str
@@ -30,6 +31,8 @@ class Settings(BaseSettings):
     fill_duration_buffer: float = 0.25
     fill_duration_water: float = 0.1
     cooldown: float = 1
+    led_debounce: float = 3
+    measurement_delay: float = 5
 
     # Meta
     recycle_cycles: int = 5

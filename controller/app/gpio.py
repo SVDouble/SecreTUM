@@ -14,7 +14,12 @@ def __patched_init(self, chip=None):
 
 gpiozero.pins.lgpio.LGPIOFactory.__init__ = __patched_init
 
-from gpiozero import DigitalOutputDevice, DigitalInputDevice
+from gpiozero import (
+    DigitalOutputDevice,
+    DigitalInputDevice,
+    AnalogInputDevice,
+    OutputDevice,
+)
 
 from app.models import Source, VariableUpdate
 from app.repository import Repository
@@ -27,13 +32,27 @@ logger = get_logger(__file__)
 
 class GPIOBackend:
     def __init__(
-        self, repository: Repository, input_pins: list[int], output_pins: list[int]
+        self,
+        repository: Repository,
+        *,
+        analog_inputs: list[int] = None,
+        digital_inputs: list[int] = None,
+        analog_outputs: list[int] = None,
+        digital_outputs: list[int] = None,
     ):
         self.repository = repository
         self.settings = repository.settings
+        analog_inputs = analog_inputs or []
+        digital_inputs = digital_inputs or []
+        analog_outputs = analog_outputs or []
+        digital_outputs = digital_outputs or []
 
-        self.input_devices = {pin: DigitalInputDevice(pin) for pin in input_pins}
-        self.output_devices = {pin: DigitalOutputDevice(pin) for pin in output_pins}
+        self.input_devices = {
+            pin: DigitalInputDevice(pin) for pin in digital_inputs
+        } | {pin: AnalogInputDevice(pin) for pin in analog_inputs}
+        self.output_devices = {
+            pin: DigitalOutputDevice(pin) for pin in digital_outputs
+        } | {pin: OutputDevice(pin) for pin in analog_outputs}
 
     async def set_gpio(self, pin: int, value: int):
         if pin not in self.output_devices:
@@ -65,7 +84,7 @@ class GPIOBackend:
     async def monitor_gpio(self):
         while True:
             for pin, device in self.input_devices.items():
-                value = 1 if device.is_active else 0
+                value = device.value
                 previous_value = await self.repository.get_gpio(pin)
                 if value != previous_value:
                     await self.repository.set_gpio(pin, value, source=Source.GPIO)
