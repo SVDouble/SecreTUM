@@ -39,15 +39,21 @@ class GPIOBackend:
         if pin not in self.output_devices:
             raise ValueError(f"Pin {pin} not permitted for GPIO access")
         target = self.output_devices[pin]
+        previous_value = target.value
         if target.value != value:
             target.value = value
+        logger.debug(
+            f"Setting GPIO pin {pin} to value {value} (before: {previous_value})"
+        )
 
     async def monitor_redis(self):
         pubsub = self.repository.redis.pubsub()
         await pubsub.subscribe("gpio")
         async for message in pubsub.listen():
             if message["type"] == "message":
-                update: VariableUpdate = VariableUpdate.model_load_json(message["data"])
+                update: VariableUpdate = VariableUpdate.model_validate_json(
+                    message["data"]
+                )
                 if update.source == Source.GPIO:
                     # Skip updates from GPIO to avoid infinite loop
                     continue
@@ -63,6 +69,9 @@ class GPIOBackend:
                 previous_value = await self.repository.get_gpio(pin)
                 if value != previous_value:
                     await self.repository.set_gpio(pin, value, source=Source.GPIO)
+                    logger.debug(
+                        f"Reading GPIO pin {pin} value as {value} (before: {previous_value})"
+                    )
             await asyncio.sleep(0.01)
 
     async def monitor(self):
