@@ -33,17 +33,18 @@ services:
     environment:
       REDIS_URL: redis://secretum-redis:6379
     volumes:
-      - ./controller:/app:ro
+      - /dev:/dev
+      - /sys:/sys
     labels:
       - "traefik.enable=true"
       - 'traefik.docker.network=secretum_proxy'
       - "traefik.http.routers.app.entrypoints=http"
-      - "traefik.http.routers.app.rule=Host(`api.${SERVER_NAME}`)"
+      - "traefik.http.routers.app.rule=Host(`${SERVER_NAME}`) && PathPrefix(`/app`)"
       - 'traefik.http.routers.app.middlewares=no-auth-secured@file'
+      - "traefik.http.middlewares.app.stripprefix.prefixes=/app"
       - "traefik.http.services.app.loadbalancer.server.port=8000"
     restart: 'unless-stopped'
-    security_opt:
-      - 'no-new-privileges:true'
+    privileged: true
 
   redis:
     image: redis:7.0-alpine
@@ -69,14 +70,17 @@ services:
     container_name: "secretum-redis-insight"
     networks:
       - secretum_proxy
+    environment:
+      - RI_PROXY_PATH=/redis
     volumes:
       - redis_insight_data:/data
     labels:
       - "traefik.enable=true"
       - 'traefik.docker.network=secretum_proxy'
       - "traefik.http.routers.redis-insight.entrypoints=http"
-      - "traefik.http.routers.redis-insight.rule=Host(`insight.${SERVER_NAME}`)"
+      - "traefik.http.routers.redis-insight.rule=Host(`${SERVER_NAME}`) && PathPrefix(`/redis`)"
       - 'traefik.http.routers.redis-insight.middlewares=no-auth-secured@file'
+      - "traefik.http.middlewares.redis-insight.stripprefix.prefixes=/redis"
       - "traefik.http.services.redis-insight.loadbalancer.server.port=5540"
     restart: 'unless-stopped'
     security_opt:
@@ -100,7 +104,7 @@ services:
       - "traefik.enable=true"
       - 'traefik.docker.network=secretum_proxy'
       - "traefik.http.routers.prometheus.entrypoints=http"
-      - "traefik.http.routers.prometheus.rule=Host(`prometheus.${SERVER_NAME}`)"
+      - "traefik.http.routers.prometheus.rule=Host(`${SERVER_NAME}`) && PathPrefix(`/prometheus`)"
       - 'traefik.http.routers.prometheus.middlewares=no-auth-secured@file'
       - "traefik.http.services.prometheus.loadbalancer.server.port=9090"
     restart: 'unless-stopped'
@@ -132,8 +136,6 @@ services:
     networks:
       - 'secretum_proxy'
     restart: 'unless-stopped'
-    security_opt:
-      - 'no-new-privileges:true'
     privileged: true
 
   grafana:
@@ -145,6 +147,9 @@ services:
       - grafana_data:/var/lib/grafana
       - ./grafana/provisioning:/etc/grafana/provisioning
     environment:
+      - GF_SERVER_ROOT_URL=%(protocol)s://%(domain)s:%(http_port)s/grafana
+      - GF_SERVER_DOMAIN=${SERVER_NAME}
+      - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP="false"
       - GF_INSTALL_PLUGINS=redis-datasource
@@ -153,8 +158,9 @@ services:
       - "traefik.enable=true"
       - 'traefik.docker.network=secretum_proxy'
       - "traefik.http.routers.grafana.entrypoints=http"
-      - "traefik.http.routers.grafana.rule=Host(`${SERVER_NAME}`)"
+      - "traefik.http.routers.grafana.rule=Host(`${SERVER_NAME}`) && PathPrefix(`/grafana`)"
       - 'traefik.http.routers.grafana.middlewares=no-auth-secured@file'
+      - "traefik.http.middlewares.grafana.stripprefix.prefixes=/grafana"
       - "traefik.http.services.grafana.loadbalancer.server.port=3000"
     restart: 'unless-stopped'
     security_opt:

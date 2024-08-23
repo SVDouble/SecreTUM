@@ -32,7 +32,6 @@ class Controller:
 
     async def measure_x(self):
         logger.info("Starting measurement.")
-
         sensor_value = await self.repository.read_measurement()
         logger.debug(f"Measured X: {sensor_value}")
 

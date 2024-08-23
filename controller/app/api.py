@@ -6,7 +6,8 @@ from app.repository import Repository
 from app.settings import Settings
 from app.utils import get_logger
 
-app = FastAPI()
+app = FastAPI(root_path="/app")
+# TODO: pass /app as environment variable
 settings = Settings()
 repository = Repository(settings)
 logger = get_logger(__file__)
