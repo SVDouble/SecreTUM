@@ -53,3 +53,39 @@ async def get_state():
     current_state = await repository.get_state()
     logger.info(f"Retrieved current state: {current_state}.")
     return {"state": current_state}
+
+
+@app.post("/fill-water")
+async def fill_water():
+    current_state = await repository.get_state()
+    if current_state != "idle":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot fill water unless the system is in 'idle' state",
+        )
+    await repository.fill_water()
+    return {"status": "water_filled"}
+
+
+@app.post("/fill-buffer")
+async def fill_buffer():
+    current_state = await repository.get_state()
+    if current_state != "idle":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot fill buffer unless the system is in 'idle' state",
+        )
+    await repository.fill_buffer()
+    return {"status": "buffer_filled"}
+
+
+@app.post("/drain")
+async def drain():
+    current_state = await repository.get_state()
+    if current_state != "idle":
+        raise HTTPException(
+            status_code=400,
+            detail="Cannot drain unless the system is in 'idle' state",
+        )
+    await repository.drain()
+    return {"status": "chamber_drained"}

@@ -52,9 +52,9 @@ class Repository:
 
     async def drain(self):
         logger.info("Draining the chamber.")
-        await self.start_pump(self.settings.water_pump, backward=True)
+        await self.start_pump(self.settings.drain_pump)
         await asyncio.sleep(self.settings.drain_duration)
-        await self.stop_pump(self.settings.water_pump)
+        await self.stop_pump(self.settings.drain_pump)
         logger.info("Chamber drained.")
 
     async def fill_water(self):
