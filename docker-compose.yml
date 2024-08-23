@@ -41,8 +41,11 @@ services:
       - "traefik.http.routers.app.entrypoints=http"
       - "traefik.http.routers.app.rule=Host(`${SERVER_NAME}`) && PathPrefix(`/app`)"
       - 'traefik.http.routers.app.middlewares=no-auth-secured@file'
-      - "traefik.http.middlewares.app.stripprefix.prefixes=/app"
       - "traefik.http.services.app.loadbalancer.server.port=8000"
+      - "traefik.http.middlewares.app.stripprefix.prefixes=/app"
+      - "traefik.http.middlewares.app.redirectregex.regex=^http://api.${SERVER_NAME}/(.*)"
+      - "traefik.http.middlewares.app.redirectregex.replacement=http://${SERVER_NAME}/$${1}"
+      - "traefik.http.middlewares.app.redirectregex.permanent=false"
     restart: 'unless-stopped'
     privileged: true
 
