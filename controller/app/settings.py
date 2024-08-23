@@ -14,10 +14,9 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
 
     # GPIO Pins
-    buffer_pump_pin: int = 20
-    water_pump_pin: int = 21
-    drain_pump_pin: int = 22
-    optical_sensor_pin: int = 23
+    buffer_pump: tuple[int, int] = (23, 22)
+    water_pump: tuple[int, int] = (27, 17)
+    optical_sensor_pin: int = 4
 
     # Redis URL
     redis_url: str

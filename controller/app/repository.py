@@ -1,4 +1,5 @@
 import asyncio
+import random
 
 import redis.asyncio as redis
 
@@ -34,46 +35,47 @@ class Repository:
             value = int(value)
         return value
 
-    async def set_gpio(self, pin: int, value: int, source: Source):
+    async def set_gpio(self, pin: int, value: int, source: Source = Source.CONTROLLER):
         await self.set(f"gpio:{pin}", value)
         update = VariableUpdate(name=str(pin), value=value, source=source)
         await self.redis.publish("gpio", update.model_dump_json())
 
+    @async_lock
+    async def start_pump(self, motor: tuple[int, int], backward: bool = False):
+        await self.set_gpio(motor[0], int(backward))
+        await self.set_gpio(motor[1], int(not backward))
+
+    @async_lock
+    async def stop_pump(self, motor: tuple[int, int]):
+        await self.set_gpio(motor[0], 0)
+        await self.set_gpio(motor[1], 0)
+
     async def drain(self):
         logger.info("Draining the chamber.")
-        await self.start_pump(self.settings.drain_pump_pin)
+        await self.start_pump(self.settings.water_pump, backward=True)
         await asyncio.sleep(self.settings.drain_duration)
-        await self.stop_pump(self.settings.drain_pump_pin)
+        await self.stop_pump(self.settings.water_pump)
         logger.info("Chamber drained.")
 
     async def fill_water(self):
         logger.info("Filling the chamber with water.")
-        await self.start_pump(self.settings.water_pump_pin)
+        await self.start_pump(self.settings.water_pump)
         await asyncio.sleep(self.settings.fill_duration)
-        await self.stop_pump(self.settings.water_pump_pin)
+        await self.stop_pump(self.settings.water_pump)
         logger.info("Chamber filled with water.")
 
     async def fill_buffer(self):
         logger.info("Filling the chamber with buffer.")
-        await self.start_pump(self.settings.buffer_pump_pin)
+        await self.start_pump(self.settings.buffer_pump)
         await asyncio.sleep(self.settings.fill_duration)
-        await self.stop_pump(self.settings.buffer_pump_pin)
+        await self.stop_pump(self.settings.buffer_pump)
         logger.info("Chamber filled with buffer.")
 
-    @async_lock
-    async def start_pump(self, pump_pin: int):
-        await self.set_gpio(pump_pin, 1, source=Source.CONTROLLER)
-        await self.set(f"pump_{pump_pin}", 1)
-
-    @async_lock
-    async def stop_pump(self, pump_pin: int):
-        await self.set_gpio(pump_pin, 0, source=Source.CONTROLLER)
-        await self.set(f"pump_{pump_pin}", 0)
-
     async def read_measurement(self):
-        # TODO
         await asyncio.sleep(5)
-        return 42
+        value = random.randint(0, 42)
+        await self.set("controller:measurement", value)
+        return value
 
     async def check_optical_sensor(self) -> bool:
         return bool(await self.get_gpio(self.settings.optical_sensor_pin))
