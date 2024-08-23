@@ -23,8 +23,10 @@ class Controller:
         logger.info("Starting recycling process.")
 
         await self.repository.drain()
-        await self.repository.fill_water()
-        await self.repository.drain()
+        for i in range(self.settings.recycle_cycles):
+            logger.info(f"Recycling: cycle {i+1} out of {self.settings.recycle_cycles}.")
+            await self.repository.fill_water()
+            await self.repository.drain()
         await self.repository.fill_buffer()
 
         logger.info("Recycling process completed.")

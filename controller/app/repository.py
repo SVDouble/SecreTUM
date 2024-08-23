@@ -55,20 +55,23 @@ class Repository:
         await self.start_pump(self.settings.drain_pump)
         await asyncio.sleep(self.settings.drain_duration)
         await self.stop_pump(self.settings.drain_pump)
+        await asyncio.sleep(self.settings.cooldown)
         logger.info("Chamber drained.")
 
     async def fill_water(self):
         logger.info("Filling the chamber with water.")
         await self.start_pump(self.settings.water_pump)
-        await asyncio.sleep(self.settings.fill_duration)
+        await asyncio.sleep(self.settings.fill_duration_water)
         await self.stop_pump(self.settings.water_pump)
+        await asyncio.sleep(self.settings.cooldown)
         logger.info("Chamber filled with water.")
 
     async def fill_buffer(self):
         logger.info("Filling the chamber with buffer.")
         await self.start_pump(self.settings.buffer_pump)
-        await asyncio.sleep(self.settings.fill_duration)
+        await asyncio.sleep(self.settings.fill_duration_buffer)
         await self.stop_pump(self.settings.buffer_pump)
+        await asyncio.sleep(self.settings.cooldown)
         logger.info("Chamber filled with buffer.")
 
     async def read_measurement(self):

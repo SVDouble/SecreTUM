@@ -14,8 +14,8 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
 
     # GPIO Pins
-    buffer_pump: tuple[int, int] = (6, 5)
-    water_pump: tuple[int, int] = (23, 22)
+    buffer_pump: tuple[int, int] = (5, 6)
+    water_pump: tuple[int, int] = (22, 23)
     drain_pump: tuple[int, int] = (27, 17)
     optical_sensor_pin: int = 4
 
@@ -26,10 +26,13 @@ class Settings(BaseSettings):
     gpio_enabled: bool = True
 
     # Timing configurations (in seconds)
-    wash_duration: int = 5  # Duration for the wash cycle
-    pump_duration: int = 1  # Duration for pumping the analyte or buffer
-    drain_duration: int = 3  # Duration for draining the chamber
-    fill_duration: int = 2  # Duration for filling the chamber with water or buffer
+    drain_duration: float = 2  # Duration for draining the chamber
+    fill_duration_buffer: float = 0.25
+    fill_duration_water: float = 0.1
+    cooldown: float = 1
+
+    # Meta
+    recycle_cycles: int = 5
 
     # Default state
     default_state: str = "idle"  # Default starting state of the system
