@@ -1,5 +1,19 @@
 import asyncio
 
+import gpiozero.pins.lgpio
+import lgpio
+
+
+def __patched_init(self, chip=None):
+    super().__init__()
+    chip = 0
+    self._handle = lgpio.gpiochip_open(chip)
+    self._chip = chip
+    self.pin_class = gpiozero.pins.lgpio.LGPIOPin
+
+
+gpiozero.pins.lgpio.LGPIOFactory.__init__ = __patched_init
+
 from gpiozero import DigitalOutputDevice, DigitalInputDevice
 
 from app.models import Source, VariableUpdate

@@ -33,8 +33,7 @@ services:
     environment:
       REDIS_URL: redis://secretum-redis:6379
     volumes:
-      - /dev:/dev
-      - /sys:/sys
+      - /dev/gpiomem0:/dev/gpiomem0
     labels:
       - "traefik.enable=true"
       - 'traefik.docker.network=secretum_proxy'
@@ -43,9 +42,6 @@ services:
       - 'traefik.http.routers.app.middlewares=no-auth-secured@file'
       - "traefik.http.services.app.loadbalancer.server.port=8000"
       - "traefik.http.middlewares.app.stripprefix.prefixes=/app"
-      - "traefik.http.middlewares.app.redirectregex.regex=^http://api.${SERVER_NAME}/(.*)"
-      - "traefik.http.middlewares.app.redirectregex.replacement=http://${SERVER_NAME}/$${1}"
-      - "traefik.http.middlewares.app.redirectregex.permanent=false"
     restart: 'unless-stopped'
     privileged: true
 

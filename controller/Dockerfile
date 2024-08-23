@@ -53,7 +53,7 @@ EXPOSE 80
 
 # Set Python path and switch to the non-root user
 ENV PYTHONPATH=$APP_HOME
-USER app:app
+USER root
 
 # Start the application
 ENTRYPOINT ["python", "-m", "app"]
