@@ -30,11 +30,7 @@ async def main():
         gpio_backend = GPIOBackend(
             repository,
             input_pins=[settings.optical_sensor_pin],
-            output_pins=[
-                settings.buffer_pump_pin,
-                settings.water_pump_pin,
-                settings.drain_pump_pin,
-            ],
+            output_pins=[*settings.buffer_pump, *settings.water_pump],
         )
         loops.append(asyncio.create_task(gpio_backend.monitor()))
     await asyncio.gather(*loops)
