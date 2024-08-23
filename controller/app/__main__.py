@@ -27,7 +27,15 @@ async def main():
     # Run all the tasks
     loops = [controller.main_loop(), server.serve()]
     if settings.gpio_enabled:
-        gpio_backend = GPIOBackend(repository)
+        gpio_backend = GPIOBackend(
+            repository,
+            input_pins=[settings.optical_sensor_pin],
+            output_pins=[
+                settings.buffer_pump_pin,
+                settings.water_pump_pin,
+                settings.drain_pump_pin,
+            ],
+        )
         loops.append(asyncio.create_task(gpio_backend.monitor()))
     await asyncio.gather(*loops)
 

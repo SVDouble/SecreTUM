@@ -1,5 +1,4 @@
 from enum import StrEnum
-from typing import Any
 
 from pydantic import BaseModel
 
@@ -14,5 +13,5 @@ class Source(StrEnum):
 
 class VariableUpdate(BaseModel):
     name: str
-    value: Any
+    value: int
     source: Source

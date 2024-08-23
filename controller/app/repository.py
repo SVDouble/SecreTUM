@@ -28,8 +28,11 @@ class Repository:
     async def set_state(self, state: str):
         await self.set("controller:state", state)
 
-    async def get_gpio(self, pin: int) -> int | bool | None:
-        return await self.get(f"gpio:{pin}")
+    async def get_gpio(self, pin: int) -> int | None:
+        value = await self.get(f"gpio:{pin}")
+        if value is not None:
+            value = int(value)
+        return value
 
     async def set_gpio(self, pin: int, value: int, source: Source):
         await self.set(f"gpio:{pin}", value)
