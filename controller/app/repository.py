@@ -100,14 +100,18 @@ class Repository:
         if value:
             now = datetime.now()
             if time_started_str := await self.get(debounce_key):
-                time_started = datetime.strptime(time_started_str, "%Y-%m-%d %H:%M:%S.%f")
+                time_started = datetime.strptime(
+                    time_started_str, "%Y-%m-%d %H:%M:%S.%f"
+                )
             else:
                 time_started = now
                 await self.set(debounce_key, now.strftime("%Y-%m-%d %H:%M:%S.%f"))
             seconds_passed = (now - time_started).total_seconds()
             if seconds_passed > self.settings.led_debounce:
                 success = True
-            logger.debug(f"Optical sensor has been on for {seconds_passed} seconds, success: {success}")
+            logger.debug(
+                f"Optical sensor has been on for {seconds_passed} seconds, success: {success}"
+            )
         else:
             await self.delete(debounce_key)
         return success
