@@ -1,5 +1,4 @@
 import asyncio
-import random
 from datetime import datetime
 
 import redis.asyncio as redis
@@ -85,11 +84,23 @@ class Repository:
         if await self.get_gpio(self.settings.led_pin) != mode:
             await self.set_gpio(self.settings.led_pin, mode)
 
+    async def start_measurement(self):
+        """Publish a message to trigger the measurement."""
+        await self.redis.publish("sensor:trigger", "start_measurement")
+        logger.info("Published measurement trigger to channel 'sensor:trigger'.")
+
     async def read_measurement(self):
-        await asyncio.sleep(5)
-        value = random.randint(0, 42)
-        await self.set("controller:measurement", value)
-        return value
+        """Wait for an update in sensor values within the specified timeout period."""
+        await self.start_measurement()
+        pubsub = self.redis.pubsub()
+        await pubsub.subscribe("sensor:update")
+        try:
+            async with asyncio.timeout(self.settings.measurement_timeout):
+                async for message in pubsub.listen():
+                    if message["type"] == "message" and message["data"] == "complete":
+                        return await self.get("sensor:measurement")
+        except TimeoutError:
+            logger.error("Measurement timed out.")
 
     async def check_optical_sensor(self) -> bool:
         value = await self.get_gpio(self.settings.optical_sensor_pin)

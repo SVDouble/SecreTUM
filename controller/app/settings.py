@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     cooldown: float = 1
     led_debounce: float = 3
     measurement_delay: float = 5
+    measurement_timeout: float = 60 * 5
 
     # Meta
     recycle_cycles: int = 5

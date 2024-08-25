@@ -2,20 +2,27 @@ import logging
 
 import numpy as np
 import redis
-from scipy.stats import t  # Assuming you need scipy for statistical calculations
+from scipy.stats import t
 
 from pspython import pspyinstruments, pspymethods
 
 # Set up logging configuration
 logging.basicConfig(level=logging.INFO)
 
-# Set up Redis connection
-redis_client = redis.Redis(host="localhost", port=6379, decode_responses=True)
-redis_pubsub = redis_client.pubsub()
-redis_pubsub.subscribe("sensor:trigger")
-
 # Redis TimeSeries configuration
 RETENTION_PERIOD_MS = 30 * 24 * 60 * 60 * 1000  # 1 month in milliseconds
+TRIGGER_CHANNEL = "sensor:trigger"
+UPDATE_CHANNEL = "sensor:update"
+TIMESERIES_KEY = "sensor:measurements"
+MEASUREMENT_KEY = "sensor:measurement"
+
+REDIS_HOST = "10.0.2.2"  # IP address of the host machine
+N_MEASUREMENTS = 20
+
+# Set up Redis connection
+redis_client = redis.Redis(host=REDIS_HOST, port=6379, decode_responses=True)
+redis_pubsub = redis_client.pubsub()
+redis_pubsub.subscribe(TRIGGER_CHANNEL)
 
 
 def echo_new_data(new_data):
@@ -37,13 +44,23 @@ def select_instrument(instruments):
     return instruments[choice]
 
 
-def store_to_redis(timeseries_key, value):
+def store_to_redis(value):
     """Store a measurement value to Redis TimeSeries with a retention policy."""
-    redis_client.ts().create(timeseries_key, retention_msecs=RETENTION_PERIOD_MS)
-    redis_client.ts().add(timeseries_key, "*", value)
+    #redis_client.ts().create(TIMESERIES_KEY, retention_msecs=RETENTION_PERIOD_MS)
+    #redis_client.ts().add(TIMESERIES_KEY, "*", value)
+    redis_client.set(MEASUREMENT_KEY, value)
 
 
-def run_measurements(n_measurements=20):
+def notify_controller():
+    """Notify the controller that the measurement is complete."""
+    redis_client.publish(UPDATE_CHANNEL, "complete")
+
+
+def remove_previous_measurement():
+    redis_client.delete(MEASUREMENT_KEY)
+
+
+def run_measurements(n_measurements):
     """Main function to run the measurement."""
     manager = pspyinstruments.InstrumentManager(new_data_callback=echo_new_data)
     instruments = pspyinstruments.discover_instruments()
@@ -126,12 +143,13 @@ def analyze_data(values):
 def listen_for_triggers():
     """Listen to Redis Pub/Sub channel for measurement triggers."""
     logging.info(
-        "Listening for measurement triggers on Redis channel 'measurement_trigger'."
+        f"Listening for measurement triggers on Redis channel '{TRIGGER_CHANNEL}'."
     )
     for message in redis_pubsub.listen():
         if message["type"] == "message":
             logging.info(f"Received trigger: {message['data']}")
-            m = run_measurements(n_measurements=20)
+            remove_previous_measurement()
+            m = run_measurements(n_measurements=N_MEASUREMENTS)
             if m:
                 capacitance_list = m.cs_arrays[0]
                 avg_capacitance, sem, confidence_interval = analyze_data(
@@ -142,7 +160,10 @@ def listen_for_triggers():
                 logging.info(f"95% Confidence interval: {confidence_interval} F")
 
                 # Store the average capacitance to Redis TimeSeries
-                store_to_redis("sensor:capacitance", avg_capacitance)
+                store_to_redis(avg_capacitance)
+            else:
+                logging.error("Measurement failed.")
+            notify_controller()
 
 
 if __name__ == "__main__":
