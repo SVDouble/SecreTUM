@@ -25,7 +25,7 @@ class Controller:
         await self.repository.drain()
         for i in range(self.settings.recycle_cycles):
             logger.info(
-                f"Recycling: cycle {i+1} out of {self.settings.recycle_cycles}."
+                f"Recycling: cycle {i + 1} out of {self.settings.recycle_cycles}."
             )
             await self.repository.fill_water()
             await self.repository.drain()
@@ -34,11 +34,11 @@ class Controller:
         logger.info("Recycling process completed.")
         await self.transition_state(self.State.IDLE)
 
-    async def measure_x(self):
-        logger.info("Starting measurement.")
+    async def measure_capacitance(self):
+        logger.info("Starting capacitance measurement.")
         sensor_value = await self.repository.read_measurement()
-        logger.debug(f"Measured X: {sensor_value}")
-
+        logger.debug(f"Measured capacitance: {sensor_value}")
+        await self.repository.set("controller:capacitance", sensor_value)
         await self.transition_state(self.State.RECYCLING)
 
     async def check_optical_sensor(self):
@@ -63,7 +63,7 @@ class Controller:
             elif state == self.State.MEASURE:
                 await asyncio.sleep(self.settings.measurement_delay)
                 await self.repository.set_led(0)
-                await self.measure_x()
+                await self.measure_capacitance()
             elif state == self.State.RECYCLING:
                 await self.repository.set_led(1)
                 await self.start_recycling()

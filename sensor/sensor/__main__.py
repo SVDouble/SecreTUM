@@ -16,7 +16,7 @@ UPDATE_CHANNEL = "sensor:update"
 TIMESERIES_KEY = "sensor:measurements"
 MEASUREMENT_KEY = "sensor:measurement"
 
-REDIS_HOST = "10.0.2.2"  # IP address of the host machine
+REDIS_HOST = "secretum"  # IP address of the host machine
 N_MEASUREMENTS = 20
 
 # Set up Redis connection
