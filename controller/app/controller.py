@@ -1,6 +1,9 @@
 import asyncio
 from enum import StrEnum
 
+import numpy as np
+from scipy.optimize import curve_fit
+
 from app.repository import Repository
 from app.utils import get_logger
 
@@ -34,11 +37,32 @@ class Controller:
         logger.info("Recycling process completed.")
         await self.transition_state(self.State.IDLE)
 
-    async def measure_capacitance(self):
+    async def get_concentration(self, measured_capacitance: float) -> float:
+        reference_concentration = np.array(self.settings.reference_concentration)  # 10^n nanograms/mL
+        reference_capacitance = np.array(self.settings.reference_capacitance)  # Capacitance values
+
+        # Define the linear model for fitting: C = a * log(concentration) + b
+        def linear_model(x, a, b):
+            return a * np.log10(x) + b
+
+        # Perform linear regression to find the best fit line in the log domain
+        reference_coefficients = curve_fit(linear_model, reference_concentration, reference_capacitance)[0]
+
+        # Function to calculate concentration given a new capacitance
+        def calculate_concentration(new_capacitance, coefficients):
+            a, b = coefficients
+            concentration_estimated = 10 ** ((new_capacitance - b) / a)
+            return concentration_estimated
+
+        return calculate_concentration(measured_capacitance, reference_coefficients)
+
+    async def conduct_measurement(self):
         logger.info("Starting capacitance measurement.")
         sensor_value = await self.repository.read_measurement()
         logger.debug(f"Measured capacitance: {sensor_value}")
         await self.repository.set("controller:capacitance", sensor_value)
+        concentration = await self.get_concentration(sensor_value)
+        await self.repository.set("controller:concentration", concentration)
         await self.transition_state(self.State.RECYCLING)
 
     async def check_optical_sensor(self):
@@ -63,7 +87,7 @@ class Controller:
             elif state == self.State.MEASURE:
                 await asyncio.sleep(self.settings.measurement_delay)
                 await self.repository.set_led(0)
-                await self.measure_capacitance()
+                await self.conduct_measurement()
             elif state == self.State.RECYCLING:
                 await self.repository.set_led(1)
                 await self.start_recycling()

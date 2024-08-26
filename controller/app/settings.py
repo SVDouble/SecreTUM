@@ -40,3 +40,7 @@ class Settings(BaseSettings):
 
     # Default state
     default_state: str = "idle"  # Default starting state of the system
+
+    # Reference measurements
+    reference_concentration = [1, 10, 100, 1000, 10000]  # 10^n nanograms/mL
+    reference_capacitance = [1.1, 1.05, 0.96, 0.94, 0.85]
