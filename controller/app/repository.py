@@ -98,7 +98,7 @@ class Repository:
             async with asyncio.timeout(self.settings.measurement_timeout):
                 async for message in pubsub.listen():
                     if message["type"] == "message" and message["data"] == "complete":
-                        return await self.get("sensor:measurement")
+                        return float(await self.get("sensor:measurement"))
         except TimeoutError:
             logger.error("Measurement timed out.")
 

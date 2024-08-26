@@ -46,8 +46,9 @@ def select_instrument(instruments):
 
 def store_to_redis(value):
     """Store a measurement value to Redis TimeSeries with a retention policy."""
-    #redis_client.ts().create(TIMESERIES_KEY, retention_msecs=RETENTION_PERIOD_MS)
-    #redis_client.ts().add(TIMESERIES_KEY, "*", value)
+    value = float(value)
+    # redis_client.ts().create(TIMESERIES_KEY, retention_msecs=RETENTION_PERIOD_MS)
+    # redis_client.ts().add(TIMESERIES_KEY, "*", value)
     redis_client.set(MEASUREMENT_KEY, value)
 
 

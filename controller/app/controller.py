@@ -59,10 +59,15 @@ class Controller:
     async def conduct_measurement(self):
         logger.info("Starting capacitance measurement.")
         sensor_value = await self.repository.read_measurement()
-        logger.debug(f"Measured capacitance: {sensor_value}")
-        await self.repository.set("controller:capacitance", sensor_value)
-        concentration = await self.get_concentration(sensor_value)
-        await self.repository.set("controller:concentration", concentration)
+        if sensor_value is not None:
+            logger.debug(f"Measured capacitance: {sensor_value}")
+            await self.repository.set("controller:capacitance", sensor_value)
+            concentration = await self.get_concentration(sensor_value)
+            logger.debug(f"Interpolated concentration: {sensor_value}")
+            await self.repository.set("controller:concentration", concentration)
+        else:
+            # TODO: Handle measurement failure
+            logger.error("Measurement failed.")
         await self.transition_state(self.State.RECYCLING)
 
     async def check_optical_sensor(self):
