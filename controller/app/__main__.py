@@ -15,6 +15,7 @@ async def main():
     controller = Controller(repository)
 
     await repository.reset_all()
+    await repository.set_mode("manual")
 
     # FastAPI
     config = uvicorn.Config(

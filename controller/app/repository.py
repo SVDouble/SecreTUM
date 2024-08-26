@@ -1,5 +1,6 @@
 import asyncio
 from datetime import datetime
+from typing import Literal
 
 import redis.asyncio as redis
 
@@ -13,6 +14,8 @@ logger = get_logger(__file__)
 
 
 class Repository:
+    OperationMode = Literal["auto", "no-optical-sensor", "manual"]
+
     def __init__(self, settings: Settings):
         self.settings = settings
         self.redis = redis.from_url(self.settings.redis_url, decode_responses=True)
@@ -126,3 +129,11 @@ class Repository:
         else:
             await self.delete(debounce_key)
         return success
+
+    async def set_mode(self, mode: OperationMode):
+        await self.set("controller:mode", mode)
+        logger.info(f"Set controller mode to '{mode}'.")
+
+    async def get_mode(self) -> OperationMode:
+        mode: Repository.OperationMode | None = await self.get("controller:mode")
+        return mode if mode is not None else "auto"

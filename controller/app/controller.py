@@ -38,15 +38,21 @@ class Controller:
         await self.transition_state(self.State.IDLE)
 
     async def get_concentration(self, measured_capacitance: float) -> float:
-        reference_concentration = np.array(self.settings.reference_concentration)  # 10^n nanograms/mL
-        reference_capacitance = np.array(self.settings.reference_capacitance)  # Capacitance values
+        reference_concentration = np.array(
+            self.settings.reference_concentration
+        )  # 10^n nanograms/mL
+        reference_capacitance = np.array(
+            self.settings.reference_capacitance
+        )  # Capacitance values
 
         # Define the linear model for fitting: C = a * log(concentration) + b
         def linear_model(x, a, b):
             return a * np.log10(x) + b
 
         # Perform linear regression to find the best fit line in the log domain
-        reference_coefficients = curve_fit(linear_model, reference_concentration, reference_capacitance)[0]
+        reference_coefficients = curve_fit(
+            linear_model, reference_concentration, reference_capacitance
+        )[0]
 
         # Function to calculate concentration given a new capacitance
         def calculate_concentration(new_capacitance, coefficients):
@@ -68,7 +74,9 @@ class Controller:
         else:
             # TODO: Handle measurement failure
             logger.error("Measurement failed.")
-        await self.transition_state(self.State.RECYCLING)
+        mode = await self.repository.get_mode()
+        next_state = self.State.IDLE if mode == "manual" else self.State.RECYCLING
+        await self.transition_state(next_state)
 
     async def check_optical_sensor(self):
         if await self.repository.check_optical_sensor():
@@ -88,7 +96,9 @@ class Controller:
             state = await self.repository.get_state()
             if state == self.State.IDLE:
                 await self.repository.set_led(1)
-                await self.check_optical_sensor()
+                mode = await self.repository.get_mode()
+                if mode == "auto":
+                    await self.check_optical_sensor()
             elif state == self.State.MEASURE:
                 await asyncio.sleep(self.settings.measurement_delay)
                 await self.repository.set_led(0)

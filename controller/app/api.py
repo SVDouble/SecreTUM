@@ -24,6 +24,10 @@ class StateModel(BaseModel):
     state: str
 
 
+class ModeModel(BaseModel):
+    mode: Repository.OperationMode
+
+
 @app.post("/state")
 async def update_state(state_model: StateModel):
     current_state = await repository.get_state()
@@ -89,3 +93,9 @@ async def drain():
         )
     await repository.drain()
     return {"status": "chamber_drained"}
+
+
+@app.post("/mode")
+async def set_mode(mode_model: ModeModel):
+    await repository.set_mode(mode_model.mode)
+    return {"status": f"mode_set_to_{mode_model.mode}"}
