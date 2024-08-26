@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"] = "DEBUG"
 
     # GPIO Pins
-    buffer_pump: tuple[int, int] = (5, 6)
+    buffer_pump: tuple[int, int] = (6, 5)
     water_pump: tuple[int, int] = (22, 23)
     drain_pump: tuple[int, int] = (27, 17)
     optical_sensor_pin: int = 4
@@ -42,5 +42,5 @@ class Settings(BaseSettings):
     default_state: str = "idle"  # Default starting state of the system
 
     # Reference measurements
-    reference_concentration = [1, 10, 100, 1000, 10000]  # 10^n nanograms/mL
-    reference_capacitance = [1.1, 1.05, 0.96, 0.94, 0.85]
+    reference_concentration: list[float] = [1, 10, 100, 1000, 10000]  # 10^n nanograms/mL
+    reference_capacitance: list[float] = [1.1, 1.05, 0.96, 0.94, 0.85]
