@@ -52,18 +52,18 @@ class Controller:
         def calculate_concentration(new_capacitance, coefficients):
             a, b = coefficients
             concentration_estimated = 10 ** ((new_capacitance - b) / a)
-            return concentration_estimated
+            return float(concentration_estimated)
 
         return calculate_concentration(measured_capacitance, reference_coefficients)
 
     async def conduct_measurement(self):
         logger.info("Starting capacitance measurement.")
-        sensor_value = await self.repository.read_measurement()
-        if sensor_value is not None:
-            logger.debug(f"Measured capacitance: {sensor_value}")
-            await self.repository.set("controller:capacitance", sensor_value)
-            concentration = await self.get_concentration(sensor_value)
-            logger.debug(f"Interpolated concentration: {sensor_value}")
+        capacitance = await self.repository.read_measurement()
+        if capacitance is not None:
+            logger.debug(f"Measured capacitance: {capacitance}")
+            await self.repository.set("controller:capacitance", capacitance)
+            concentration = await self.get_concentration(capacitance)
+            logger.debug(f"Interpolated concentration: {concentration}")
             await self.repository.set("controller:concentration", concentration)
         else:
             # TODO: Handle measurement failure
