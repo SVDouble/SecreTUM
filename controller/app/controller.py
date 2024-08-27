@@ -58,7 +58,7 @@ class Controller:
         def calculate_concentration(new_capacitance, coefficients):
             a, b = coefficients
             concentration_estimated = 10 ** ((new_capacitance - b) / a)
-            return float(concentration_estimated)
+            return float(concentration_estimated) * 8.84e-3
 
         return calculate_concentration(measured_capacitance, reference_coefficients)
 

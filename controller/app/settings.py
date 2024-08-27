@@ -44,4 +44,4 @@ class Settings(BaseSettings):
     # Reference measurements
     # 10^n nanograms/mL
     reference_concentration: list[float] = [1, 10, 100, 1000, 10000]
-    reference_capacitance: list[float] = [1.1, 1.05, 0.96, 0.94, 0.85]
+    reference_capacitance: list[float] = [1.1e-8, 1.05e-8, 0.96e-8, 0.94e-8, 0.85e-8]
